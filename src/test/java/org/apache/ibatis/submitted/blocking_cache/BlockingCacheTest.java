@@ -20,6 +20,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.ibatis.BaseDataTest;
+import org.apache.ibatis.cache.decorators.BlockingCache;
+import org.apache.ibatis.cache.impl.PerpetualCache;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -74,6 +76,24 @@ class BlockingCacheTest {
         Assertions.fail(e.getMessage());
       }
     }
+  }
+
+  @Test
+  public void getObject() throws InterruptedException {
+    final BlockingCache cache = new BlockingCache(new PerpetualCache("default"));
+
+    // lock twice
+//    cache.getObject(1);
+    cache.getObject(1);
+
+    Thread thread = new Thread(() -> System.out.println(cache.getObject(1)));
+    thread.setDaemon(false);
+    thread.start();
+
+    // but release once
+    cache.putObject(1, 1);
+
+    thread.join();
   }
 
 }
